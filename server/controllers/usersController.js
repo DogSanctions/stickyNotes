@@ -1,14 +1,14 @@
-const User = require('../models/User')
-const Note = require('../models/Note')
-const asyncHandler = require('express-async-handler')
-const bcrypt = require('bcrypt')
-const { response } = require('express')
+import { find, findOne, create, findById } from '../models/User'
+import { findOne as _findOne } from '../models/Note'
+import asyncHandler from 'express-async-handler'
+import { hash } from 'bcrypt'
+import { response } from 'express'
 
 // @desc Get all users
 // @route Get /users
 // @access Private
-const getAllUsers = asyncHandler(async (req, res) => {  // Get all users from MongoDB
-    const users = await User.find().select('-password').lean()
+const getAllUsers = asyncHandler(async (_req, res) => {  // Get all users from MongoDB
+    const users = await find().select('-password').lean()
     if (!users?.length) { // If no users
         return res.status(400).json({ message: 'No users found' })
     }
@@ -27,19 +27,19 @@ const createNewUser = asyncHandler(async (req, res) => {
     }
 
     // Check for duplicate
-    const duplicate = await User.findOne({ username }).lean().exec()
+    const duplicate = await findOne({ username }).lean().exec()
 
     if (duplicate) {
         return res.status(409).json({ message: 'Duplicate username' })
     }
 
     // Hash Password
-    const hashedPwd = await bcrypt.hash(password, 10) // salt rounds
+    const hashedPwd = await hash(password, 10) // salt rounds
 
     const userObject = { username, "password": hashedPwd, roles}
 
     // Create and store new user
-    const user = await User.create(userObject)
+    const user = await create(userObject)
 
     if (user) { // created
         res.status(201).json({ message: `New user ${username} created` })
@@ -59,14 +59,14 @@ const updateUser = asyncHandler(async (req, res) => {
         return res.status(400).json({ message: 'All fields are required' })
     }
 
-    const user = await User.findById(id).exec()
+    const user = await findById(id).exec()
 
     if (!user) {
         return res.status(400).json({ message: 'User not found' })
     }
 
     // Check for duplicate
-    const duplicate = await User.findOne({ username }).lean().exec()
+    const duplicate = await findOne({ username }).lean().exec()
     // Allow updates to the original user
     if (duplicate && duplicate?._id.toString() !== id) {
         return res.status(409).json({ message: 'Duplicate username' })
@@ -78,7 +78,7 @@ const updateUser = asyncHandler(async (req, res) => {
 
     if (password) {
         // Hash password
-        user.password = await bcrypt.hash(password, 10) // salt rounds
+        user.password = await hash(password, 10) // salt rounds
     }
 
     const updatedUser = await user.save()
@@ -96,12 +96,12 @@ const deleteUser = asyncHandler(async (req, res) => {
         return res.status(400).json({ message: 'User ID Required' })
     }
 
-    const note = await Note.findOne({ user: id }).lean().exec()
+    const note = await _findOne({ user: id }).lean().exec()
     if (note) {
         return res.status(400).json({ message: 'User has assigned notes' })
     }
 
-    const user = await User.findById(id).exec()
+    const user = await findById(id).exec()
 
     if (!user) {
         return res.status(400).json({ message: 'User not found' })
@@ -114,7 +114,7 @@ const deleteUser = asyncHandler(async (req, res) => {
     res.json(reply)
 })
 
-module.exports = {
+export default {
     getAllUsers,
     createNewUser,
     updateUser,
