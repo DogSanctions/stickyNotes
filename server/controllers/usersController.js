@@ -1,13 +1,13 @@
-import { find, findOne, create, findById } from '../models/User'
-import { findOne as _findOne } from '../models/Note'
-import asyncHandler from 'express-async-handler'
-import { hash } from 'bcrypt'
-import { response } from 'express'
+const User = require('../models/User')
+const Note = require('../models/Note')
+const asyncHandler = require('express-async-handler')
+const bcrypt = require('bcrypt')
+const { response } = require('express')
 
 // @desc Get all users
 // @route Get /users
 // @access Private
-const getAllUsers = asyncHandler(async (_req, res) => {  // Get all users from MongoDB
+const getAllUsers = asyncHandler(async (req, res) => {  // Get all users from MongoDB
     const users = await find().select('-password').lean()
     if (!users?.length) { // If no users
         return res.status(400).json({ message: 'No users found' })
@@ -114,7 +114,7 @@ const deleteUser = asyncHandler(async (req, res) => {
     res.json(reply)
 })
 
-export default {
+module.exports = {
     getAllUsers,
     createNewUser,
     updateUser,
